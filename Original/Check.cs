@@ -12,9 +12,7 @@ namespace SmaliPatcher
 
         public void Init(object sender)
         {
-            if (_mainForm != null)
-                return;
-            _mainForm = (MainForm) sender;
+            _mainForm ??= (MainForm) sender;
         }
 
         public bool CheckJava()
@@ -112,9 +110,8 @@ namespace SmaliPatcher
 
         public void CheckAdministrator()
         {
-            if (new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator))
-                return;
-            _mainForm.DebugUpdate("\nWARNING: Could not detect administrator privileges.");
+            if (!new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator))
+                _mainForm.DebugUpdate("\nWARNING: Could not detect administrator privileges.");
         }
     }
 }

@@ -25,18 +25,15 @@ namespace SmaliPatcher
 
         public void Init(object sender)
         {
-            if (_mainForm != null)
-                return;
-            _mainForm = (MainForm) sender;
+            _mainForm ??= (MainForm) sender;
         }
 
         public bool Generate()
         {
-            if (Directory.Exists("tmp\\magisk"))
-                Directory.Delete("tmp\\magisk", true);
+            if (Directory.Exists("tmp\\magisk")) Directory.Delete("tmp\\magisk", true);
             if (!Directory.Exists("tmp\\magisk"))
             {
-                string str1 = "";
+                string text = "";
                 Directory.CreateDirectory("tmp\\magisk\\META-INF\\com\\google\\android");
                 Directory.CreateDirectory("tmp\\magisk\\system\\framework");
                 Directory.CreateDirectory("tmp\\magisk\\system\\framework\\arm");
@@ -52,10 +49,13 @@ namespace SmaliPatcher
                     File.Create("tmp\\magisk\\system\\framework\\oat\\arm\\services.odex").Dispose();
                     File.Create("tmp\\magisk\\system\\framework\\oat\\arm64\\services.odex").Dispose();
                     File.Create("tmp\\magisk\\system\\framework\\oat\\arm64\\services.vdex").Dispose();
-                    str1 = str1 + "/system/framework/services.jar\n" + "/system/framework/services.odex\n" +
-                           "/system/framework/arm/services.odex\n" + "/system/framework/arm64/services.odex\n" +
-                           "/system/framework/oat/arm/services.odex\n" + "/system/framework/oat/arm64/services.odex\n" +
-                           "/system/framework/oat/arm64/services.vdex\n";
+                    text += "/system/framework/services.jar\n";
+                    text += "/system/framework/services.odex\n";
+                    text += "/system/framework/arm/services.odex\n";
+                    text += "/system/framework/arm64/services.odex\n";
+                    text += "/system/framework/oat/arm/services.odex\n";
+                    text += "/system/framework/oat/arm64/services.odex\n";
+                    text += "/system/framework/oat/arm64/services.vdex\n";
                 }
                 if (File.Exists("apk\\framework.jar"))
                 {
@@ -63,8 +63,10 @@ namespace SmaliPatcher
                     File.Create("tmp\\magisk\\system\\framework\\framework.odex").Dispose();
                     File.Create("tmp\\magisk\\system\\framework\\arm\\framework.odex").Dispose();
                     File.Create("tmp\\magisk\\system\\framework\\arm64\\framework.odex").Dispose();
-                    str1 = str1 + "/system/framework/framework.jar\n" + "/system/framework/framework.odex\n" +
-                           "/system/framework/arm/framework.odex\n" + "/system/framework/arm64/framework.odex\n";
+                    text += "/system/framework/framework.jar\n";
+                    text += "/system/framework/framework.odex\n";
+                    text += "/system/framework/arm/framework.odex\n";
+                    text += "/system/framework/arm64/framework.odex\n";
                 }
                 if (File.Exists("tmp\\module_installer.sh"))
                     File.Move("tmp\\module_installer.sh", "tmp/magisk/META-INF/com/google/android/update-binary");
@@ -75,17 +77,17 @@ namespace SmaliPatcher
                     File.WriteAllText("tmp/magisk/META-INF/com/google/android/update-binary", "", Encoding.ASCII);
                 }
                 File.WriteAllText("tmp/magisk/META-INF/com/google/android/updater-script", "#MAGISK", Encoding.ASCII);
-                string str2 = "\nPOSTFSDATA=false\n";
+                string text2 = "\nPOSTFSDATA=false\n";
                 if (GetPatchStatus("Samsung Knox"))
                 {
-                    str2 = "\nPOSTFSDATA=true\n";
+                    text2 = "\nPOSTFSDATA=true\n";
                     Directory.CreateDirectory("tmp\\magisk\\common");
                     File.WriteAllText("tmp\\magisk\\common\\post-fs-data.sh", _postFsData.Replace("\r\n", "\n"),
                         Encoding.ASCII);
                 }
                 File.WriteAllText("tmp\\magisk\\install.sh",
-                    _installSh0.Replace("\r\n", "\n") + str2.Replace("\r\n", "\n") + _installSh1.Replace("\r\n", "\n") +
-                    str1.Replace("\r\n", "\n") + _installSh2.Replace("\r\n", "\n"), Encoding.ASCII);
+                    _installSh0.Replace("\r\n", "\n") + text2.Replace("\r\n", "\n") + _installSh1.Replace("\r\n", "\n") +
+                    text.Replace("\r\n", "\n") + _installSh2.Replace("\r\n", "\n"), Encoding.ASCII);
                 File.WriteAllText("tmp\\magisk\\module.prop", _moduleProp.Replace("\r\n", "\n"), Encoding.ASCII);
                 if (File.Exists("SmaliPatcher-" + Application.ProductVersion + "-fOmey@XDA.zip"))
                     File.Delete("SmaliPatcher-" + Application.ProductVersion + "-fOmey@XDA.zip");
@@ -100,8 +102,7 @@ namespace SmaliPatcher
                 if (!_mainForm.SkipCleanUp)
                 {
                     Directory.Delete("tmp", true);
-                    if (!_mainForm.SimulateAdb)
-                        Directory.Delete("adb", true);
+                    if (!_mainForm.SimulateAdb) Directory.Delete("adb", true);
                     Directory.Delete("smali", true);
                     Directory.Delete("apk", true);
                 }

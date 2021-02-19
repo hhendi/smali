@@ -37,25 +37,22 @@ namespace SmaliPatcher
             ServicePointManager.Expect100Continue = true;
             ServicePointManager.SecurityProtocol =
                 SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
-            if (_mainForm == null)
-                _mainForm = (MainForm) sender;
-            if (_magisk != null)
-                return;
-            _magisk = new Magisk();
-            _magisk.Init(_mainForm);
+            _mainForm ??= (MainForm) sender;
+            if (_magisk == null)
+            {
+                _magisk = new Magisk();
+                _magisk.Init(_mainForm);
+            }
         }
 
         public void DownloadBinary()
         {
-            if (!Directory.Exists("bin"))
-                Directory.CreateDirectory("bin");
-            if (Directory.Exists("tmp"))
-                Directory.Delete("tmp", true);
+            if (!Directory.Exists("bin")) Directory.CreateDirectory("bin");
+            if (Directory.Exists("tmp")) Directory.Delete("tmp", true);
             if ((!File.Exists("bin\\apktool.jar") || !File.Exists("bin\\baksmali.jar") ||
                  !File.Exists("bin\\smali.jar") || new FileInfo("bin\\apktool.jar").Length == 0L ||
                  new FileInfo("bin\\baksmali.jar").Length == 0L || new FileInfo("bin\\smali.jar").Length == 0L) &&
-                (_apktoolUrl == null || _smaliUrl == null || _baksmaliUrl == null))
-                GetUrls();
+                (_apktoolUrl == null || _smaliUrl == null || _baksmaliUrl == null)) GetUrls();
             if (!File.Exists("bin\\apktool.jar") || new FileInfo("bin\\apktool.jar").Length == 0L)
             {
                 _mainForm.DisableControls();
@@ -99,8 +96,7 @@ namespace SmaliPatcher
                 new FileInfo("bin\\sigspoof_4.1-6.0.dex").Length == 0L ||
                 new FileInfo("bin\\sigspoof_7.0-9.0.dex").Length == 0L)
             {
-                if (!Directory.Exists("tmp"))
-                    Directory.CreateDirectory("tmp");
+                if (!Directory.Exists("tmp")) Directory.CreateDirectory("tmp");
                 _mainForm.DisableControls();
                 _dexPatcherBytesIn = 0.0;
                 _dexPatcherTotalBytes = 1.0;
@@ -116,8 +112,7 @@ namespace SmaliPatcher
                 !File.Exists("bin\\AdbWinUsbApi.dll") || new FileInfo("bin\\adb.exe").Length == 0L ||
                 new FileInfo("bin\\AdbWinApi.dll").Length == 0L || new FileInfo("bin\\AdbWinUsbApi.dll").Length == 0L)
             {
-                if (!Directory.Exists("tmp"))
-                    Directory.CreateDirectory("tmp");
+                if (!Directory.Exists("tmp")) Directory.CreateDirectory("tmp");
                 _mainForm.DisableControls();
                 _adbBytesIn = 0.0;
                 _adbTotalBytes = 1.0;
@@ -135,8 +130,7 @@ namespace SmaliPatcher
                 new FileInfo("bin\\vdexExtractor.exe").Length == 0L || new FileInfo("bin\\cygz.dll").Length == 0L ||
                 new FileInfo("bin\\cygwin1.dll").Length == 0L || new FileInfo("bin\\cyggcc_s-seh-1.dll").Length == 0L)
             {
-                if (!Directory.Exists("tmp"))
-                    Directory.CreateDirectory("tmp");
+                if (!Directory.Exists("tmp")) Directory.CreateDirectory("tmp");
                 _mainForm.DisableControls();
                 _vdexBytesIn = 0.0;
                 _vdexTotalBytes = 1.0;
@@ -169,8 +163,7 @@ namespace SmaliPatcher
 
         public void DownloadMagisk()
         {
-            if (!Directory.Exists("tmp"))
-                Directory.CreateDirectory("tmp");
+            if (!Directory.Exists("tmp")) Directory.CreateDirectory("tmp");
             if (File.Exists("tmp\\module_installer.sh") && new FileInfo("tmp\\module_installer.sh").Length != 0L)
                 return;
             _mainForm.DisableControls();
@@ -190,10 +183,6 @@ namespace SmaliPatcher
         {
             switch (file)
             {
-                case "adb":
-                    _adbBytesIn = double.Parse(e.BytesReceived.ToString());
-                    _adbTotalBytes = double.Parse(e.TotalBytesToReceive.ToString());
-                    break;
                 case "apktool":
                     _apktoolBytesIn = double.Parse(e.BytesReceived.ToString());
                     _apktoolTotalBytes = double.Parse(e.TotalBytesToReceive.ToString());
@@ -202,38 +191,43 @@ namespace SmaliPatcher
                     _baksmaliBytesIn = double.Parse(e.BytesReceived.ToString());
                     _baksmaliTotalBytes = double.Parse(e.TotalBytesToReceive.ToString());
                     break;
-                case "cdex":
-                    _cdexBytesIn = double.Parse(e.BytesReceived.ToString());
-                    _cdexTotalBytes = double.Parse(e.TotalBytesToReceive.ToString());
+                case "smali":
+                    _smaliBytesIn = double.Parse(e.BytesReceived.ToString());
+                    _smaliTotalBytes = double.Parse(e.TotalBytesToReceive.ToString());
                     break;
                 case "dexpatcher":
                     _dexPatcherBytesIn = double.Parse(e.BytesReceived.ToString());
                     _dexPatcherTotalBytes = double.Parse(e.TotalBytesToReceive.ToString());
                     break;
-                case "moduleInstaller":
-                    _moduleInstallerBytesIn = double.Parse(e.BytesReceived.ToString());
-                    _moduleInstallerTotalBytes = double.Parse(e.TotalBytesToReceive.ToString());
-                    break;
-                case "smali":
-                    _smaliBytesIn = double.Parse(e.BytesReceived.ToString());
-                    _smaliTotalBytes = double.Parse(e.TotalBytesToReceive.ToString());
+                case "adb":
+                    _adbBytesIn = double.Parse(e.BytesReceived.ToString());
+                    _adbTotalBytes = double.Parse(e.TotalBytesToReceive.ToString());
                     break;
                 case "vdex":
                     _vdexBytesIn = double.Parse(e.BytesReceived.ToString());
                     _vdexTotalBytes = double.Parse(e.TotalBytesToReceive.ToString());
                     break;
+                case "cdex":
+                    _cdexBytesIn = double.Parse(e.BytesReceived.ToString());
+                    _cdexTotalBytes = double.Parse(e.TotalBytesToReceive.ToString());
+                    break;
+                case "moduleInstaller":
+                    _moduleInstallerBytesIn = double.Parse(e.BytesReceived.ToString());
+                    _moduleInstallerTotalBytes = double.Parse(e.TotalBytesToReceive.ToString());
+                    break;
             }
-            double num1 = _apktoolBytesIn + _baksmaliBytesIn + _smaliBytesIn + _dexPatcherBytesIn + _adbBytesIn +
-                          _vdexBytesIn + _cdexBytesIn + _moduleInstallerBytesIn;
+            double num = _apktoolBytesIn + _baksmaliBytesIn + _smaliBytesIn + _dexPatcherBytesIn + _adbBytesIn +
+                         _vdexBytesIn + _cdexBytesIn + _moduleInstallerBytesIn;
             double num2 = _apktoolTotalBytes + _baksmaliTotalBytes + _smaliTotalBytes + _dexPatcherTotalBytes +
                           _adbTotalBytes + _vdexTotalBytes + _cdexTotalBytes + _moduleInstallerTotalBytes;
-            double d = num1 / num2 * 100.0;
-            if (num1 > num2)
-                return;
-            if (file == "moduleInstaller")
-                _mainForm.StatusUpdate("Magisk Template Download: " + int.Parse(Math.Truncate(d).ToString()) + "%");
-            else
-                _mainForm.StatusUpdate("Binary Download: " + int.Parse(Math.Truncate(d).ToString()) + "%");
+            double d = num / num2 * 100.0;
+            if (num <= num2)
+            {
+                if (file == "moduleInstaller")
+                    _mainForm.StatusUpdate("Magisk Template Download: " + int.Parse(Math.Truncate(d).ToString()) + "%");
+                else
+                    _mainForm.StatusUpdate("Binary Download: " + int.Parse(Math.Truncate(d).ToString()) + "%");
+            }
         }
 
         private void FileCompleted(object sender, AsyncCompletedEventArgs e, string file)
@@ -241,17 +235,16 @@ namespace SmaliPatcher
             if (file == "moduleInstaller")
             {
                 _mainForm.EnableControls();
-                if (_moduleInstallerBytesIn < _moduleInstallerTotalBytes)
-                    return;
-                _mainForm.DebugUpdate("\n==> Magisk template download complete");
-                _magisk.Generate();
+                if (_moduleInstallerBytesIn >= _moduleInstallerTotalBytes)
+                {
+                    _mainForm.DebugUpdate("\n==> Magisk template download complete");
+                    _magisk.Generate();
+                }
             }
-            else
+            else if (_apktoolBytesIn >= _apktoolTotalBytes && _baksmaliBytesIn >= _baksmaliTotalBytes &&
+                     _smaliBytesIn >= _smaliTotalBytes && _dexPatcherBytesIn >= _dexPatcherTotalBytes &&
+                     _adbBytesIn >= _adbTotalBytes && _vdexBytesIn >= _vdexTotalBytes && _cdexBytesIn >= _cdexTotalBytes)
             {
-                if (_apktoolBytesIn < _apktoolTotalBytes || _baksmaliBytesIn < _baksmaliTotalBytes ||
-                    _smaliBytesIn < _smaliTotalBytes || _dexPatcherBytesIn < _dexPatcherTotalBytes ||
-                    _adbBytesIn < _adbTotalBytes || _vdexBytesIn < _vdexTotalBytes || _cdexBytesIn < _cdexTotalBytes)
-                    return;
                 _mainForm.EnableControls();
                 _mainForm.DebugUpdate("\n==> Binary download complete");
                 UnpackBinarys();
@@ -289,21 +282,20 @@ namespace SmaliPatcher
         private void UnpackBinarys()
         {
             bool flag = false;
-            if (Directory.Exists("tmp\\platform-tools"))
-                Directory.Delete("tmp\\platform-tools", true);
+            if (Directory.Exists("tmp\\platform-tools")) Directory.Delete("tmp\\platform-tools", true);
             if (!Directory.Exists("tmp\\platform-tools") && File.Exists("tmp\\platform-tools.zip") &&
-                new FileInfo("tmp\\platform-tools.zip").Length > 0L)
+                new FileInfo("tmp\\platform-tools.zip").Length > 0)
             {
                 _mainForm.StatusUpdate("Unpacking adb..");
                 ZipFile.ExtractToDirectory("tmp\\platform-tools.zip", "tmp");
                 if (Directory.GetDirectories("tmp", "platform-tools").Length != 0)
                 {
                     string[] files = Directory.GetFiles("tmp\\platform-tools", "adb*");
-                    for (int index = 0; index < files.Length; ++index)
+                    for (int i = 0; i < files.Length; i++)
                     {
-                        if (File.Exists("bin\\" + Path.GetFileName(files[index])))
-                            File.Delete("bin\\" + Path.GetFileName(files[index]));
-                        File.Move(files[index], "bin\\" + Path.GetFileName(files[index]));
+                        if (File.Exists("bin\\" + Path.GetFileName(files[i])))
+                            File.Delete("bin\\" + Path.GetFileName(files[i]));
+                        File.Move(files[i], "bin\\" + Path.GetFileName(files[i]));
                     }
                 }
                 flag = true;

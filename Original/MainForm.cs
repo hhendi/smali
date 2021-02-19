@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
-using MaterialSkin;
 using MaterialSkin.Controls;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using SmaliPatcher.Properties;
@@ -171,98 +170,92 @@ namespace SmaliPatcher
 
         private void browseButton_Click(object sender, EventArgs e)
         {
-            CommonOpenFileDialog commonOpenFileDialog = new CommonOpenFileDialog();
-            commonOpenFileDialog.IsFolderPicker = true;
-            if (commonOpenFileDialog.ShowDialog() != CommonFileDialogResult.Ok)
-                return;
-            _browseTextbox.Text = commonOpenFileDialog.FileName;
-            for (int index = 0; index < Patches.Count(); ++index)
-                Patches[index] = new Patches(false, Patches[index].PatchTitle, Patches[index].PatchDescription,
-                    Patches[index].TargetFile);
-            for (int index1 = 0; index1 < _optionsList.Items.Count; ++index1)
-            for (int index2 = 0; index2 < Patches.Count(); ++index2)
-                if (Patches[index2].PatchTitle == _optionsList.Items[index1].SubItems[1].Text)
-                    Patches[index2] = new Patches(_optionsList.Items[index1].Checked, Patches[index2].PatchTitle,
-                        Patches[index2].PatchDescription, Patches[index2].TargetFile);
+            CommonOpenFileDialog val = new CommonOpenFileDialog();
+            val.IsFolderPicker = true;
+            if (val.ShowDialog() != CommonFileDialogResult.Ok) return;
+            _browseTextbox.Text = val.FileName;
+            for (int i = 0; i < Patches.Count(); i++)
+                Patches[i] = new Patches(false, Patches[i].PatchTitle, Patches[i].PatchDescription,
+                    Patches[i].TargetFile);
+            for (int j = 0; j < _optionsList.Items.Count; j++)
+            for (int k = 0; k < Patches.Count; k++)
+                if (Patches[k].PatchTitle == _optionsList.Items[j].SubItems[1].Text)
+                    Patches[k] = new Patches(_optionsList.Items[j].Checked, Patches[k].PatchTitle,
+                        Patches[k].PatchDescription, Patches[k].TargetFile);
             _optionsList.Items.Clear();
-            foreach (Patches patch in Patches)
-            foreach (string file in Directory.GetFiles(commonOpenFileDialog.FileName, patch.TargetFile,
-                SearchOption.AllDirectories))
-                if (Path.GetFileName(file) == patch.TargetFile)
-                {
-                    _optionsList.Items.Add("").SubItems.AddRange(new string[2]
+            foreach (Patches patch2 in Patches)
+            {
+                string[] files = Directory.GetFiles(val.FileName, patch2.TargetFile,
+                    SearchOption.AllDirectories);
+                for (int l = 0; l < files.Length; l++)
+                    if (Path.GetFileName(files[l]) == patch2.TargetFile)
                     {
-                        patch.PatchTitle,
-                        patch.PatchDescription
-                    });
-                    _optionsList.Items[_optionsList.Items.Count - 1].Checked = patch.Status;
-                }
+                        _optionsList.Items.Add("").SubItems
+                            .AddRange(new string[2]
+                            {
+                                patch2.PatchTitle,
+                                patch2.PatchDescription
+                            });
+                        _optionsList.Items[_optionsList.Items.Count - 1].Checked = patch2.Status;
+                    }
+            }
         }
 
         private void browseTextbox_TextChanged(object sender, EventArgs e)
         {
-            if (_browseTextbox.Text.Length > 0)
-                _patchButton.Text = "PATCH";
-            if (_browseTextbox.Text.Length != 0)
-                return;
-            _patchButton.Text = "ADB PATCH";
+            if (_browseTextbox.Text.Length > 0) _patchButton.Text = "PATCH";
+            if (_browseTextbox.Text.Length == 0) _patchButton.Text = "ADB PATCH";
         }
 
         private void patchButton_Click(object sender, EventArgs e)
         {
             StatusUpdate("Executing prepatch checks..");
-            if (!_check.CheckJava())
-                return;
+            if (!_check.CheckJava()) return;
             string path = _browseTextbox.Text;
-            for (int index = 0; index < Patches.Count(); ++index)
-                Patches[index] = new Patches(false, Patches[index].PatchTitle, Patches[index].PatchDescription,
-                    Patches[index].TargetFile);
-            int num1 = 0;
-            for (int index1 = 0; index1 < _optionsList.Items.Count; ++index1)
+            for (int i = 0; i < Patches.Count(); i++)
+                Patches[i] = new Patches(false, Patches[i].PatchTitle, Patches[i].PatchDescription,
+                    Patches[i].TargetFile);
+            int num = 0;
+            for (int j = 0; j < _optionsList.Items.Count; j++)
             {
-                bool s = _optionsList.Items[index1].Checked;
-                if (s)
-                    ++num1;
-                for (int index2 = 0; index2 < Patches.Count(); ++index2)
-                    if (Patches[index2].PatchTitle == _optionsList.Items[index1].SubItems[1].Text)
-                        Patches[index2] = new Patches(s, Patches[index2].PatchTitle, Patches[index2].PatchDescription,
-                            Patches[index2].TargetFile);
+                bool @checked = _optionsList.Items[j].Checked;
+                if (@checked) num++;
+                for (int k = 0; k < Patches.Count; k++)
+                    if (Patches[k].PatchTitle == _optionsList.Items[j].SubItems[1].Text)
+                        Patches[k] = new Patches(@checked, Patches[k].PatchTitle, Patches[k].PatchDescription,
+                            Patches[k].TargetFile);
             }
-            if (num1 == 0)
+            if (num == 0)
             {
                 DebugUpdate("\n!!! ERROR: No patches selected, you must select atleast one.");
                 StatusUpdate("ERROR..");
+                return;
             }
-            else
+            int num2 = _check.CheckAdb();
+            if (num2 == 0)
             {
-                int num2 = _check.CheckAdb();
-                switch (num2)
-                {
-                    case -1:
-                        DebugUpdate("\n!!! ERROR: Unauthorized ADB device found.");
-                        HintUpdate("Have you accepted the \"Allow USB debugging\" popup on your phone?");
-                        StatusUpdate("ERROR..");
-                        break;
-                    case 0:
-                        DebugUpdate("\n!!! ERROR: No ADB devices found.");
-                        HintUpdate("Is your phone plugged into your PC?");
-                        StatusUpdate("ERROR..");
-                        break;
-                    default:
-                        if (num2 > 1)
-                        {
-                            DebugUpdate("\n!!! ERROR: Multiple ADB devices found.");
-                            StatusUpdate("ERROR..");
-                        }
-                        break;
-                }
-                if (path.Length == 0 && num2 == 1)
-                {
-                    WorkerThread = new Thread(() => _adb.PullFileset());
-                    WorkerThread.Start();
-                }
-                if (path.Length <= 0 || num2 != 1)
-                    return;
+                DebugUpdate("\n!!! ERROR: No ADB devices found.");
+                HintUpdate("Is your phone plugged into your PC?");
+                StatusUpdate("ERROR..");
+            }
+            else if (num2 == -1)
+            {
+                DebugUpdate("\n!!! ERROR: Unauthorized ADB device found.");
+                HintUpdate("Have you accepted the \"Allow USB debugging\" popup on your phone?");
+                StatusUpdate("ERROR..");
+            }
+            else if (num2 > 1)
+            {
+                DebugUpdate("\n!!! ERROR: Multiple ADB devices found.");
+                StatusUpdate("ERROR..");
+            }
+            if (path.Length == 0 && num2 == 1)
+            {
+                WorkerThread = new Thread(() => _adb.PullFileset());
+                WorkerThread.Start();
+            }
+            if (path.Length > 0 && num2 == 1)
+            {
                 WorkerThread = new Thread(() => _patch.ProcessFrameworkDirectory(path));
                 WorkerThread.Start();
             }
@@ -275,13 +268,15 @@ namespace SmaliPatcher
             WorkerThread.Start();
         }
 
-        private void paypalButton_Click(object sender, EventArgs e) => Process.Start(
-            "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=pauly.galea@gmail.com&item_name=fOmey");
-
-        protected virtual void Dispose(bool disposing)
+        private void paypalButton_Click(object sender, EventArgs e)
         {
-            if (disposing)
-                components?.Dispose();
+            Process.Start(
+                "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=pauly.galea@gmail.com&item_name=fOmey");
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing) components?.Dispose();
             base.Dispose(disposing);
         }
 
@@ -308,16 +303,16 @@ namespace SmaliPatcher
             _debugDivider.BackColor = Color.FromArgb(224, 224, 224);
             _debugDivider.Depth = 0;
             _debugDivider.Location = new Point(8, 69);
-            _debugDivider.MouseState = MouseState.OUT;
-            _debugDivider.Name = "_debugDivider";
+            _debugDivider.MouseState = 0;
+            _debugDivider.Name = "debugDivider";
             _debugDivider.Size = new Size(402, 145);
             _debugDivider.TabIndex = 0;
             _debugDivider.Text = "logDivider";
             _debugInfo.BackColor = Color.FromArgb(224, 224, 224);
-            _debugInfo.BorderStyle = BorderStyle.None;
+            _debugInfo.BorderStyle = 0;
             _debugInfo.Font = new Font("Microsoft Sans Serif", 7f);
             _debugInfo.Location = new Point(13, 74);
-            _debugInfo.Name = "_debugInfo";
+            _debugInfo.Name = "debugInfo";
             _debugInfo.ReadOnly = true;
             _debugInfo.Size = new Size(392, 135);
             _debugInfo.TabIndex = 1;
@@ -325,43 +320,42 @@ namespace SmaliPatcher
             _servicejarDivider.BackColor = Color.FromArgb(55, 71, 79);
             _servicejarDivider.Depth = 0;
             _servicejarDivider.Location = new Point(0, 411);
-            _servicejarDivider.MouseState = MouseState.OUT;
-            _servicejarDivider.Name = "_servicejarDivider";
+            _servicejarDivider.MouseState = 0;
+            _servicejarDivider.Name = "servicejarDivider";
             _servicejarDivider.Size = new Size(419, 40);
             _servicejarDivider.TabIndex = 2;
             _servicejarDivider.Text = "servicesJarDivider";
             _browseButton.AutoSize = true;
             _browseButton.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             _browseButton.Depth = 0;
-            _browseButton.Image = null;
             _browseButton.Location = new Point(326, 460);
             _browseButton.Margin = new Padding(4, 6, 4, 6);
-            _browseButton.MouseState = MouseState.OUT;
-            _browseButton.Name = "_browseButton";
+            _browseButton.MouseState = 0;
+            _browseButton.Name = "browseButton";
             _browseButton.Primary = false;
             _browseButton.Size = new Size(83, 36);
             _browseButton.TabIndex = 4;
             _browseButton.Text = "Browse..";
             _browseButton.UseVisualStyleBackColor = true;
-            _browseButton.Click += browseButton_Click;
+            _browseButton.Click += (EventHandler) browseButton_Click;
             _patchButton.AutoSize = true;
-            _patchButton.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            _patchButton.AutoSize = false;
             _patchButton.Depth = 0;
-            _patchButton.Image = null;
             _patchButton.Location = new Point(162, 505);
-            _patchButton.MouseState = MouseState.OUT;
-            _patchButton.Name = "_patchButton";
+            _patchButton.MouseState = 0;
+            _patchButton.Name = "patchButton";
             _patchButton.Primary = true;
             _patchButton.Size = new Size(96, 36);
             _patchButton.TabIndex = 6;
             _patchButton.Text = "ADB PATCH";
             _patchButton.UseVisualStyleBackColor = true;
-            _patchButton.Click += patchButton_Click;
+            _patchButton.Click += (EventHandler) patchButton_Click;
             _browseTextbox.Depth = 0;
             _browseTextbox.Hint = "";
             _browseTextbox.Location = new Point(9, 466);
-            _browseTextbox.MouseState = MouseState.OUT;
-            _browseTextbox.Name = "_browseTextbox";
+            _browseTextbox.MouseState = 0;
+            _browseTextbox.Name = "browseTextbox";
+            _browseTextbox.PasswordChar = '\0';
             _browseTextbox.SelectedText = "";
             _browseTextbox.SelectionLength = 0;
             _browseTextbox.SelectionStart = 0;
@@ -369,13 +363,13 @@ namespace SmaliPatcher
             _browseTextbox.TabIndex = 7;
             _browseTextbox.TabStop = false;
             _browseTextbox.UseSystemPasswordChar = false;
-            _browseTextbox.TextChanged += browseTextbox_TextChanged;
+            _browseTextbox.TextChanged += (EventHandler) browseTextbox_TextChanged;
             _devLabel.AutoSize = true;
             _devLabel.BackColor = Color.FromArgb(55, 71, 79);
             _devLabel.Font = new Font("Microsoft Sans Serif", 11f);
             _devLabel.ForeColor = Color.White;
             _devLabel.Location = new Point(268, 34);
-            _devLabel.Name = "_devLabel";
+            _devLabel.Name = "devLabel";
             _devLabel.Size = new Size(105, 18);
             _devLabel.TabIndex = 10;
             _devLabel.Text = "fOmey @ XDA";
@@ -384,15 +378,15 @@ namespace SmaliPatcher
             _servicejarLabel.Font = new Font("Microsoft Sans Serif", 11f);
             _servicejarLabel.ForeColor = Color.White;
             _servicejarLabel.Location = new Point(12, 422);
-            _servicejarLabel.Name = "_servicejarLabel";
+            _servicejarLabel.Name = "servicejarLabel";
             _servicejarLabel.Size = new Size(135, 18);
             _servicejarLabel.TabIndex = 11;
             _servicejarLabel.Text = "/system/framework";
             _statusDivider.BackColor = Color.FromArgb(38, 50, 56);
             _statusDivider.Depth = 0;
             _statusDivider.Location = new Point(0, 554);
-            _statusDivider.MouseState = MouseState.OUT;
-            _statusDivider.Name = "_statusDivider";
+            _statusDivider.MouseState = 0;
+            _statusDivider.Name = "statusDivider";
             _statusDivider.Size = new Size(419, 20);
             _statusDivider.TabIndex = 12;
             _statusDivider.Text = "servicesJarDivider";
@@ -401,15 +395,15 @@ namespace SmaliPatcher
             _statusText.Font = new Font("Microsoft Sans Serif", 8f);
             _statusText.ForeColor = Color.White;
             _statusText.Location = new Point(5, 557);
-            _statusText.Name = "_statusText";
+            _statusText.Name = "statusText";
             _statusText.Size = new Size(30, 13);
             _statusText.TabIndex = 13;
             _statusText.Text = "Idle..";
             _optionsDivider.BackColor = Color.FromArgb(55, 71, 79);
             _optionsDivider.Depth = 0;
             _optionsDivider.Location = new Point(0, 219);
-            _optionsDivider.MouseState = MouseState.OUT;
-            _optionsDivider.Name = "_optionsDivider";
+            _optionsDivider.MouseState = 0;
+            _optionsDivider.Name = "optionsDivider";
             _optionsDivider.Size = new Size(419, 40);
             _optionsDivider.TabIndex = 14;
             _label1.AutoSize = true;
@@ -417,16 +411,16 @@ namespace SmaliPatcher
             _label1.Font = new Font("Microsoft Sans Serif", 11f);
             _label1.ForeColor = Color.White;
             _label1.Location = new Point(12, 230);
-            _label1.Name = "_label1";
+            _label1.Name = "label1";
             _label1.Size = new Size(102, 18);
             _label1.TabIndex = 15;
             _label1.Text = "Patch Options";
-            _optionsList.BorderStyle = BorderStyle.None;
+            _optionsList.BorderStyle = 0;
             _optionsList.CheckBoxes = true;
             _optionsList.Font = new Font("Microsoft Sans Serif", 7f);
-            _optionsList.HeaderStyle = ColumnHeaderStyle.None;
+            _optionsList.HeaderStyle = 0;
             _optionsList.Location = new Point(8, 263);
-            _optionsList.Name = "_optionsList";
+            _optionsList.Name = "optionsList";
             _optionsList.Size = new Size(402, 144);
             _optionsList.TabIndex = 16;
             _optionsList.UseCompatibleStateImageBehavior = false;
@@ -435,17 +429,17 @@ namespace SmaliPatcher
             _paypalButton.Image = Resources.Paypal;
             _paypalButton.ImageLocation = "";
             _paypalButton.Location = new Point(380, 29);
-            _paypalButton.Name = "_paypalButton";
+            _paypalButton.Name = "paypalButton";
             _paypalButton.Size = new Size(24, 28);
-            _paypalButton.SizeMode = PictureBoxSizeMode.AutoSize;
+            _paypalButton.SizeMode = (PictureBoxSizeMode) 2;
             _paypalButton.TabIndex = 17;
             _paypalButton.TabStop = false;
-            _paypalButton.Click += paypalButton_Click;
+            _paypalButton.Click += (EventHandler) paypalButton_Click;
             _infoLabel.BackColor = Color.FromArgb(55, 71, 79);
             _infoLabel.Font = new Font("Microsoft Sans Serif", 7f);
-            _infoLabel.ForeColor = Color.White;
+            _infoLabel.ForeColor= Color.White;
             _infoLabel.Location = new Point(10, 193);
-            _infoLabel.Name = "_infoLabel";
+            _infoLabel.Name = "infoLabel";
             _infoLabel.Size = new Size(398, 19);
             _infoLabel.TabIndex = 0;
             _infoLabel.Text = "Info label";

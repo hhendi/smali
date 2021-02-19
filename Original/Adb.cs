@@ -9,16 +9,17 @@ namespace SmaliPatcher
     internal class Adb
     {
         private Download _download;
+
         private string _lastOutput = "";
         private MainForm _mainForm;
+
         private Patch _patch;
-        private List<string> _processedFiles = new List<string>();
+
         public List<Patches> Patches;
 
         public void Init(object sender)
         {
-            if (_mainForm == null)
-                _mainForm = (MainForm) sender;
+            _mainForm ??= (MainForm) sender;
             if (_patch == null)
             {
                 _patch = new Patch();
@@ -125,40 +126,36 @@ namespace SmaliPatcher
         private void ProcessOutputDataReceived(object sender, DataReceivedEventArgs e)
         {
             string data = e.Data;
-            if (data == null || !(data != _lastOutput))
+            if (data == null || data == _lastOutput)
                 return;
             _lastOutput = data;
             if (data.Length > 0 && data.Substring(0, 1) == "[")
             {
-                string str = new Regex("\\[.*\\]").Match(data).Value;
-                _mainForm.StatusUpdate("Dumping framework.. " + str.Substring(1, str.Length - 2).Replace(" ", ""));
+                string value = new Regex("\\[.*\\]").Match(data).Value;
+                _mainForm.StatusUpdate("Dumping framework.. " + value.Substring(1, value.Length - 2).Replace(" ", ""));
             }
             else
             {
-                if (data.Length <= 0 || !(data.Substring(0, 11) != "adb: error:") ||
-                    !(data.Substring(data.Length - 14, 14) != "does not exist"))
-                    return;
-                _mainForm.DebugUpdate("\n" + data);
+                if (data.Length > 0 && data.Substring(0, 11) != "adb: error:" &&
+                    data.Substring(data.Length - 14, 14) != "does not exist") _mainForm.DebugUpdate("\n" + data);
             }
         }
 
         private void ProcessErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
             string data = e.Data;
-            if (data == null || !(data != _lastOutput))
+            if (data == null || data == _lastOutput)
                 return;
             _lastOutput = data;
             if (data.Length > 0 && data.Substring(0, 1) == "[")
             {
-                string str = new Regex("\\[.*\\]").Match(data).Value;
-                _mainForm.StatusUpdate("Dumping framework.. " + str.Substring(1, str.Length - 2).Replace(" ", ""));
+                string value = new Regex("\\[.*\\]").Match(data).Value;
+                _mainForm.StatusUpdate("Dumping framework.. " + value.Substring(1, value.Length - 2).Replace(" ", ""));
             }
             else
             {
-                if (data.Length <= 0 || !(data.Substring(0, 11) != "adb: error:") ||
-                    !(data.Substring(data.Length - 14, 14) != "does not exist"))
-                    return;
-                _mainForm.DebugUpdate("\n" + data);
+                if (data.Length > 0 && data.Substring(0, 11) != "adb: error:" &&
+                    data.Substring(data.Length - 14, 14) != "does not exist") _mainForm.DebugUpdate("\n" + data);
             }
         }
     }
